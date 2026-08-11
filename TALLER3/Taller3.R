@@ -43,10 +43,10 @@ internet_por_ciudad <- tenderos_raw %>%
 #Limpiamos y organizamos datos de tal forma que se puedan agrupar por actividad
 
 ren_frame <- tenderos_raw %>%
-  # Renombramos las columnas de actividades con nombres mas descriptivos
-  rename(Tienda.1 = actG1, ComidaPreparada.2 = actG2, Peluqueria.3 = actG3, Ropa.4 = actG4,
-         Otras.5 = actG5, Papeleria.6 = actG6, vidanocturna.7 = actG7, productosinventario.8 = actG8,
-         salud.9 = actG9, servicios.10 = actG10, ferreteria.11 = actG11)
+  # Renombramos las columnas de actividades con nombres descriptivos
+  rename(Tienda.1 = actG1, ComidaPreparada.2 = actG2, PeluqueriayBelleza.3 = actG3, Ropa.4 = actG4,
+         Otras.5 = actG5, PapeleriayComunicaciones.6 = actG6, VidaNocturna.7 = actG7, ProductosInventario.8 = actG8,
+         Salud.9 = actG9, Servicios.10 = actG10, FerreteriayAfines.11 = actG11)
 
 col_frame <- ren_frame %>%
   # Convertimos las columnas de actividades en dos columnas: "category" (nombre original) y "total" (valor 0/1)
@@ -67,19 +67,17 @@ internet_por_actividad <- col_frame %>%
 # ---------------------
 
 internet_por_ciudad_actividad <- col_frame %>%
-  filter(total == 1) %>%  # Filtramos solo las filas donde la actividad está presente (valor 1)
-  group_by(Munic_Dept, Municipio, actG, Actividad) %>%  # Agrupamos por municipio y tipo de actividad
-  summarise(internet = round(mean(uso_internet, na.rm = TRUE), 0)) %>%  # Calculamos el promedio de uso de internet y lo redondeamos a entero
-  rename(divipola = Munic_Dept) %>%  # Renombramos la columna del departamento
-  arrange(Municipio, actG)  # Ordenamos por municipio y tipo de actividad
+  filter(total == 1) %>%  # Se filtran solo las filas donde la actividad está presente (valor 1)
+  group_by(Munic_Dept, Municipio, actG, Actividad) %>%  # Se agrupa por municipio y tipo de actividad
+  summarise(internet = round(mean(uso_internet, na.rm = TRUE), 0)) %>%  # Se calcula el promedio de uso de internet y se redondea a entero
+  rename(divipola = Munic_Dept) %>%  #Se renombra  la columna del departamento
+  arrange(Municipio, actG)  #Se ordena por municipio y tipo de actividad
 
 # ---------------------
 # TAREA 4: Procesar datos demograficos para obtener poblacion total por municipio
 # ---------------------
 
 #Limpieza de base datos
-
-
 
 TerriData_Dim2_Sub3 <- TerriData_Dim2_Sub3 %>%
   mutate(
@@ -103,10 +101,7 @@ poblacion <- TerriData_Dim2_Sub3 %>%
   group_by(divipola) %>%
   summarise(poblacion = sum(`Dato Numérico Limpio`, na.rm = TRUE))
 
-
-# ---------------------
-# TAREA 5: Utilizamos merge() para unir las dos bases de datos principales
-# ---------------------
+# Utilizamos merge() para unir las dos bases de datos principales
 
 base_final_internet_poblacion <- merge(poblacion, internet_por_ciudad_actividad,
                                        by.x = "divipola", by.y = "divipola")
@@ -138,14 +133,10 @@ base_final_internet_poblacion <- merge(poblacion, internet_por_ciudad_actividad,
                                        by.x = "divipola", by.y = "divipola")
 
 # =============================================================
-# TAREA 6: Reshape a formato LARGO y EXTENSO (como en la diapositiva)
+# TAREA 6: Reshape a formato LARGO y EXTENSO
 # =============================================================
 
 # --- BASE LARGA ---
-# base_final_internet_poblacion YA esta en formato largo (una fila
-# por divipola x actividad), tal cual el ejemplo de la diapositiva.
-# Solo la ordenamos y renombramos poblacion a "pob_millones" para que
-# se vea igual que el ejemplo:
 base_larga <- base_final_internet_poblacion %>%
   mutate(pob_millones = round(poblacion / 1e6, 1)) %>%
   select(divipola, municipio = Municipio, actG, Actividad, internet, pob_millones) %>%
@@ -154,8 +145,6 @@ base_larga <- base_final_internet_poblacion %>%
 print(base_larga)
 
 # --- BASE EXTENSA (wide) ---
-# CAST/reshape wide: una columna por actividad (internet_1, internet_2, ...)
-# usamos pivot_wider() para pasar de "muchas filas" a "muchas columnas"
 base_extensa <- base_larga %>%
   select(divipola, municipio, pob_millones, actG, internet) %>%
   pivot_wider(
